@@ -1,0 +1,54 @@
+! ======================================================================
+! MODÈLE de configuration du routeur Cisco 1921 du homelab
+! ----------------------------------------------------------------------
+! Ce fichier montre la structure de la configuration (routeur sur un
+! bâton : sous-interfaces 802.1Q, DHCP du VLAN 20, accès SSH).
+! Les noms d'interfaces et adresses de passerelle sont à vérifier.
+!
+! À FAIRE : remplacer ce modèle par ma vraie configuration :
+!   R1# show running-config
+! puis remplacer TOUS les mots de passe et secrets par ******** avant
+! de publier (enable secret, username ... secret, crypto, SNMP).
+! ======================================================================
+!
+hostname R1
+ip domain-name samba.lan
+!
+enable secret ********
+username admin privilege 15 secret ********
+!
+! --- Sous-interfaces : une par VLAN (trunk vers le Netgear GS308E) ---
+interface GigabitEthernet0/0
+ no shutdown
+!
+interface GigabitEthernet0/0.10
+ description VLAN 10 - Serveurs
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+!
+interface GigabitEthernet0/0.20
+ description VLAN 20 - Clients
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+!
+interface GigabitEthernet0/0.30
+ description VLAN 30 - Labo (pas de DHCP routeur)
+ encapsulation dot1Q 30
+ ip address 192.168.30.1 255.255.255.0
+!
+! --- DHCP pour le VLAN 20 seulement ---
+ip dhcp excluded-address 192.168.20.1 192.168.20.49
+ip dhcp pool VLAN20-CLIENTS
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 192.168.10.20
+ domain-name samba.lan
+!
+! --- Accès SSH uniquement ---
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+!
+end
